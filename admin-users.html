@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة إدارة المستخدمين - كلية تاليان</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: #f4f5f7;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+  .topbar {
+    background: #122A54;
+    color: #fff;
+    padding: 16px 20px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 900px;
+    margin: 0 auto 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .topbar h1 { font-size: 16px; font-weight: 600; }
+  .topbar a { color: #fff; font-size: 13px; text-decoration: none; opacity: 0.85; }
+  .container { max-width: 900px; margin: 0 auto; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .card h2 { font-size: 15px; color: #122A54; margin-bottom: 14px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  label { display: block; font-size: 12px; color: #374151; margin-bottom: 5px; }
+  input, select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .checkbox-row input { width: auto; }
+  button {
+    padding: 10px 22px;
+    background: #D8262E;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 14px;
+  }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  #formMessage { margin-top: 10px; font-size: 13px; }
+  #formMessage.error { color: #d8262e; }
+  #formMessage.success { color: #16a34a; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: right; padding: 10px 8px; border-bottom: 1px solid #eee; }
+  th { color: #6b7280; font-weight: 500; font-size: 12px; }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    background: #eef0f4;
+    color: #374151;
+  }
+  .badge.dev { background: #fde8e8; color: #D8262E; }
+  #guard { text-align: center; padding: 60px 20px; color: #6b7280; }
+</style>
+</head>
+<body>
+
+<div id="guard">جاري التحقق من الصلاحيات...</div>
+
+<div id="content" style="display:none;">
+  <div class="topbar">
+    <h1>لوحة إدارة المستخدمين</h1>
+    <a href="index.html">→ العودة للرئيسية</a>
+  </div>
+
+  <div class="container">
+
+    <div class="card">
+      <h2>إضافة مستخدم جديد</h2>
+      <div class="grid">
+        <div>
+          <label>الاسم الكامل</label>
+          <input type="text" id="newFullName">
+        </div>
+        <div>
+          <label>البريد الإلكتروني</label>
+          <input type="email" id="newEmail">
+        </div>
+        <div>
+          <label>كلمة المرور المبدئية</label>
+          <input type="password" id="newPassword" placeholder="8 أحرف على الأقل">
+        </div>
+        <div>
+          <label>نوع الحساب</label>
+          <select id="newUserType">
+            <option value="STUDENT">طالب</option>
+            <option value="FACULTY">تدريسي</option>
+            <option value="STAFF">موظف إداري</option>
+            <option value="APPLICANT">متقدّم</option>
+          </select>
+        </div>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="newIsSuperAdmin">
+        <label for="newIsSuperAdmin" style="margin:0;">صلاحيات مطوّر مطلقة (استخدم بحذر شديد)</label>
+      </div>
+      <button id="addUserBtn">إضافة المستخدم</button>
+      <div id="formMessage"></div>
+    </div>
+
+    <div class="card">
+      <h2>المستخدمون الحاليون</h2>
+      <table>
+        <thead>
+          <tr><th>الاسم</th><th>البريد</th><th>النوع</th></tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc, setDoc, collection, getDocs
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbAdssxVWFJp2KCy_ZJhrNlW_CB0fUVOA",
+    authDomain: "talyan-fad6f.firebaseapp.com",
+    projectId: "talyan-fad6f",
+    storageBucket: "talyan-fad6f.firebasestorage.app",
+    messagingSenderId: "1043413564562",
+    appId: "1:1043413564562:web:db4fd444c0c2fe3654ba4b"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const guardEl = document.getElementById("guard");
+  const contentEl = document.getElementById("content");
+
+  let currentAdminUid = null;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      guardEl.textContent = "الرجاء تسجيل الدخول أولاً من الصفحة الرئيسية";
+      return;
+    }
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (!userDoc.exists() || userDoc.data().isSuperAdmin !== true) {
+      guardEl.textContent = "لا تملك صلاحية الوصول لهذه الصفحة";
+      return;
+    }
+    currentAdminUid = user.uid;
+    guardEl.style.display = "none";
+    contentEl.style.display = "block";
+    loadUsers();
+  });
+
+  async function loadUsers() {
+    const tbody = document.getElementById("usersTableBody");
+    tbody.innerHTML = "<tr><td colspan='3'>جاري التحميل...</td></tr>";
+    const snapshot = await getDocs(collection(db, "users"));
+    tbody.innerHTML = "";
+    snapshot.forEach((docSnap) => {
+      const d = docSnap.data();
+      const typeLabel = d.isSuperAdmin
+        ? '<span class="badge dev">مطوّر</span>'
+        : '<span class="badge">' + (d.userType || "-") + '</span>';
+      tbody.innerHTML += `<tr>
+        <td>${d.fullName || "-"}</td>
+        <td>${d.email || "-"}</td>
+        <td>${typeLabel}</td>
+      </tr>`;
+    });
+  }
+
+  document.getElementById("addUserBtn").addEventListener("click", async () => {
+    const fullName = document.getElementById("newFullName").value.trim();
+    const email = document.getElementById("newEmail").value.trim();
+    const password = document.getElementById("newPassword").value;
+    const userType = document.getElementById("newUserType").value;
+    const isSuperAdmin = document.getElementById("newIsSuperAdmin").checked;
+    const msgEl = document.getElementById("formMessage");
+    const btn = document.getElementById("addUserBtn");
+
+    if (!fullName || !email || password.length < 8) {
+      msgEl.className = "error";
+      msgEl.textContent = "الرجاء تعبئة كل الحقول - كلمة المرور 8 أحرف على الأقل";
+      return;
+    }
+
+    btn.disabled = true;
+    msgEl.className = "";
+    msgEl.textContent = "جاري الإنشاء...";
+
+    // ننشئ حساب المصادقة عبر تطبيق Firebase ثانوي مؤقت
+    // حتى لا يتم تسجيل دخولنا نحن (المطوّر) تلقائياً كالمستخدم الجديد
+    const secondaryApp = initializeApp(firebaseConfig, "SecondaryUserCreation");
+    const secondaryAuth = getAuth(secondaryApp);
+
+    try {
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      const newUid = cred.user.uid;
+      await signOut(secondaryAuth);
+      await deleteApp(secondaryApp);
+
+      // نكتب ملف بيانات المستخدم بـ Firestore عبر جلسة المطوّر الأصلية
+      await setDoc(doc(db, "users", newUid), {
+        fullName,
+        email,
+        userType,
+        isSuperAdmin,
+      });
+
+      msgEl.className = "success";
+      msgEl.textContent = "تم إنشاء المستخدم بنجاح";
+      document.getElementById("newFullName").value = "";
+      document.getElementById("newEmail").value = "";
+      document.getElementById("newPassword").value = "";
+      document.getElementById("newIsSuperAdmin").checked = false;
+      loadUsers();
+    } catch (err) {
+      msgEl.className = "error";
+      msgEl.textContent = "خطأ: " + (err.message || "تعذر إنشاء المستخدم");
+      try { await deleteApp(secondaryApp); } catch (_) {}
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
