@@ -97,10 +97,11 @@
     <div id="message"></div>
   </div>
 
-  <div id="dashboard">
+  <div id="dashboard" style="display: none; text-align: center;">
     <h2 id="welcomeName"></h2>
     <p id="welcomeType"></p>
     <p id="welcomeEmail"></p>
+    <a id="adminLink" href="admin-users.html" style="display:none; margin-top:14px; color:#122A54; font-size:13px; font-weight:600; text-decoration:none;">← لوحة إدارة المستخدمين</a>
     <button id="logoutBtn">تسجيل الخروج</button>
   </div>
 
@@ -184,6 +185,7 @@
       document.getElementById("welcomeType").textContent =
         "نوع الحساب: " + (data.isSuperAdmin ? "مطوّر (صلاحيات مطلقة)" : data.userType);
       document.getElementById("welcomeEmail").textContent = user.email;
+      document.getElementById("adminLink").style.display = data.isSuperAdmin ? "inline-block" : "none";
     } else {
       loginBox.style.display = "block";
       dashboard.style.display = "none";
