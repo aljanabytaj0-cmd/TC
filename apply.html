@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>التقديم الإلكتروني - كلية تاليان للطب البشري</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f4f5f7; min-height: 100vh; }
+  .navbar {
+    background: #122A54; color: #fff; padding: 14px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .navbar a { color: #fff; font-size: 13px; text-decoration: none; }
+  .navbar .brand { font-size: 15px; font-weight: 600; }
+  .container { max-width: 560px; margin: 30px auto; padding: 0 16px 40px; }
+  .card { background: #fff; border-radius: 14px; padding: 26px 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .card h1 { font-size: 17px; color: #122A54; text-align: center; margin-bottom: 4px; }
+  .card p.sub { text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 20px; }
+  fieldset { border: none; margin-bottom: 18px; }
+  legend { font-size: 13px; font-weight: 600; color: #D8262E; margin-bottom: 10px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  label { display: block; font-size: 12px; color: #374151; margin-bottom: 5px; margin-top: 10px; }
+  input, select {
+    width: 100%; padding: 9px 10px; border: 1px solid #d1d5db;
+    border-radius: 8px; font-size: 13px;
+  }
+  input:focus, select:focus { outline: 2px solid #122A54; border-color: transparent; }
+  button {
+    width: 100%; margin-top: 20px; padding: 11px; background: #D8262E;
+    color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  #message { margin-top: 12px; font-size: 13px; text-align: center; }
+  #message.error { color: #d8262e; }
+  #message.success { color: #16a34a; }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <a href="index.html">→ العودة للرئيسية</a>
+  <div class="brand">كلية تاليان للطب البشري</div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <h1>التقديم الإلكتروني</h1>
+    <p class="sub">المرحلة الأولى: إنشاء الحساب والبيانات الأساسية</p>
+
+    <form id="applyForm">
+
+      <fieldset>
+        <legend>بيانات الحساب</legend>
+        <label>الاسم الكامل الرباعي</label>
+        <input type="text" id="fullName" required>
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="email" required>
+        <label>كلمة المرور</label>
+        <input type="password" id="password" placeholder="8 أحرف على الأقل" required>
+      </fieldset>
+
+      <fieldset>
+        <legend>البيانات الشخصية</legend>
+        <div class="row">
+          <div><label>رقم البطاقة الوطنية</label><input type="text" id="nationalId" required></div>
+          <div><label>تاريخ الميلاد</label><input type="date" id="dateOfBirth" required></div>
+        </div>
+        <div class="row">
+          <div>
+            <label>الجنس</label>
+            <select id="gender" required>
+              <option value="">اختر</option>
+              <option value="MALE">ذكر</option>
+              <option value="FEMALE">أنثى</option>
+            </select>
+          </div>
+          <div><label>الجنسية</label><input type="text" id="nationality" value="عراقي" required></div>
+        </div>
+        <label>رقم الهاتف</label>
+        <input type="tel" id="phone" required>
+      </fieldset>
+
+      <fieldset>
+        <legend>البيانات الدراسية</legend>
+        <label>اسم المدرسة الثانوية</label>
+        <input type="text" id="highSchoolName" required>
+        <div class="row">
+          <div><label>سنة التخرج</label><input type="number" id="graduationYear" min="2000" max="2026" required></div>
+          <div>
+            <label>الفرع الدراسي</label>
+            <select id="branch" required>
+              <option value="">اختر</option>
+              <option value="SCIENTIFIC">علمي</option>
+              <option value="LITERARY">أدبي</option>
+            </select>
+          </div>
+        </div>
+        <label>المعدل (النسبة المئوية)</label>
+        <input type="number" id="averageScore" min="50" max="100" step="0.01" required>
+      </fieldset>
+
+      <button id="submitBtn" type="submit">تقديم الطلب</button>
+      <div id="message"></div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const form = document.getElementById("applyForm");
+  const messageEl = document.getElementById("message");
+  const submitBtn = document.getElementById("submitBtn");
+
+  function showMessage(text, type) {
+    messageEl.textContent = text;
+    messageEl.className = type;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const fullName = document.getElementById("fullName").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const branch = document.getElementById("branch").value;
+    const averageScore = parseFloat(document.getElementById("averageScore").value);
+
+    if (password.length < 8) {
+      showMessage("كلمة المرور يجب أن تكون 8 أحرف على الأقل", "error");
+      return;
+    }
+
+    // شرط القبول الأساسي بكلية الطب - الفرع العلمي إجباري
+    if (branch !== "SCIENTIFIC") {
+      showMessage("القبول بكلية الطب البشري يتطلب الفرع العلمي حصراً", "error");
+      return;
+    }
+
+    if (isNaN(averageScore) || averageScore < 50 || averageScore > 100) {
+      showMessage("الرجاء إدخال معدل صحيح بين 50 و100", "error");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    showMessage("جاري إنشاء طلبك...", "");
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = cred.user.uid;
+
+      // ملف المستخدم الأساسي - بصلاحيات متقدّم محدودة فقط (تفرضها قواعد الحماية)
+      await setDoc(doc(db, "users", uid), {
+        fullName,
+        email,
+        userType: "APPLICANT",
+        isSuperAdmin: false,
+      });
+
+      // بيانات طلب التقديم التفصيلية
+      await setDoc(doc(db, "applications", uid), {
+        nationalId: document.getElementById("nationalId").value.trim(),
+        dateOfBirth: document.getElementById("dateOfBirth").value,
+        gender: document.getElementById("gender").value,
+        nationality: document.getElementById("nationality").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        highSchoolName: document.getElementById("highSchoolName").value.trim(),
+        graduationYear: Number(document.getElementById("graduationYear").value),
+        branch,
+        averageScore,
+        status: "SUBMITTED",
+        submittedAt: serverTimestamp(),
+      });
+
+      showMessage("تم تقديم طلبك بنجاح! جاري تحويلك...", "success");
+      setTimeout(() => { window.location.href = "applicant.html"; }, 1200);
+
+    } catch (err) {
+      if (err.code === "auth/email-already-in-use") {
+        showMessage("هذا البريد مسجّل مسبقاً، جرّب تسجيل الدخول بدلاً من ذلك", "error");
+      } else {
+        showMessage("حدث خطأ: " + (err.message || "تعذر إتمام التقديم"), "error");
+      }
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>

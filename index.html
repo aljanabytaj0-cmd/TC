@@ -113,7 +113,7 @@
 
   <div class="quick-links">
     <a href="#about"><span class="icon">🏛</span>عن الكلية</a>
-    <a id="admissionQuickLink" href="admission.html"><span class="icon">🎓</span>القبول والتسجيل</a>
+    <a id="admissionQuickLink" href="apply.html"><span class="icon">🎓</span>القبول والتسجيل</a>
     <a href="#news"><span class="icon">📰</span>الأخبار والفعاليات</a>
     <a href="#contact"><span class="icon">📞</span>اتصل بنا</a>
   </div>
@@ -184,6 +184,7 @@
   const submitBtn = document.getElementById("submitLoginBtn");
 
   document.getElementById("openLoginBtn").addEventListener("click", () => modal.classList.add("open"));
+  document.getElementById("openAdmissionBtn").addEventListener("click", () => window.location.href = "apply.html");
   document.getElementById("closeLoginBtn").addEventListener("click", () => modal.classList.remove("open"));
   modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
 
