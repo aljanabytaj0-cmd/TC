@@ -3,59 +3,167 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>كلية تاليان للطب البشري - تسجيل الدخول</title>
+<title>كلية تاليان للطب البشري</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f4f5f7; color: #1f2937; }
+
+  /* ===== شريط علوي ===== */
+  .navbar {
     background: #122A54;
-    min-height: 100vh;
+    color: #fff;
+    padding: 14px 24px;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
   }
-  .card {
-    background: #fff;
-    border-radius: 14px;
-    padding: 32px 28px;
-    width: 100%;
-    max-width: 380px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  .navbar .brand { font-size: 15px; font-weight: 600; }
+  .navbar .actions { display: flex; gap: 10px; }
+  .navbar button {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
   }
-  h1 { font-size: 18px; color: #122A54; text-align: center; margin-bottom: 4px; }
-  p.sub { text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 24px; }
-  label { display: block; font-size: 13px; color: #374151; margin-bottom: 6px; margin-top: 14px; }
-  input {
+  #openLoginBtn { background: #D8262E; color: #fff; }
+  #openAdmissionBtn { background: transparent; color: #fff; border: 0.5px solid #B9C4D9 !important; }
+
+  /* ===== قسم البطل ===== */
+  .hero {
+    background: #122A54;
+    color: #fff;
+    text-align: center;
+    padding: 60px 20px 70px;
+  }
+  .hero h1 { font-size: 26px; font-weight: 600; margin-bottom: 10px; }
+  .hero p { font-size: 14px; color: #B9C4D9; max-width: 480px; margin: 0 auto; }
+
+  /* ===== محتوى الصفحة ===== */
+  .container { max-width: 960px; margin: -40px auto 0; padding: 0 20px 50px; }
+  .quick-links { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 40px; }
+  .quick-links a {
+    background: #fff; border-radius: 12px; padding: 20px 10px; text-align: center;
+    text-decoration: none; color: #122A54; font-size: 13px; font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  .quick-links a .icon { display: block; font-size: 24px; color: #D8262E; margin-bottom: 8px; }
+
+  .section-title { font-size: 16px; font-weight: 600; color: #122A54; margin-bottom: 14px; }
+  .news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 40px; }
+  .news-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .news-card .img { height: 90px; background: #DDE4F0; }
+  .news-card .body { padding: 12px; }
+  .news-card .body p.title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .news-card .body p.date { font-size: 11px; color: #9ca3af; }
+
+  .about-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 40px; }
+  .about-card p { font-size: 13px; line-height: 1.9; color: #4b5563; }
+
+  footer {
+    background: #0C1E3D; color: #fff; padding: 24px 16px;
+    display: flex; justify-content: space-around; flex-wrap: wrap; gap: 16px;
+    text-align: center; font-size: 12px;
+  }
+  footer .icon { color: #D8262E; font-size: 16px; display: block; margin-bottom: 4px; }
+
+  /* ===== نافذة تسجيل الدخول المنبثقة ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: #fff; border-radius: 14px; padding: 28px; width: 100%; max-width: 360px; position: relative; }
+  .modal-box .close { position: absolute; top: 14px; left: 14px; background: none; border: none; font-size: 18px; cursor: pointer; color: #9ca3af; padding: 0; }
+  .modal-box h2 { font-size: 17px; color: #122A54; text-align: center; margin-bottom: 20px; }
+  .modal-box label { display: block; font-size: 13px; color: #374151; margin-bottom: 6px; margin-top: 12px; }
+  .modal-box input {
     width: 100%; padding: 10px 12px; border: 1px solid #d1d5db;
     border-radius: 8px; font-size: 14px; direction: ltr; text-align: right;
   }
-  input:focus { outline: 2px solid #122A54; border-color: transparent; }
-  button {
-    width: 100%; margin-top: 22px; padding: 11px; background: #D8262E;
-    color: #fff; border: none; border-radius: 8px; font-size: 14px;
-    font-weight: 600; cursor: pointer;
+  .modal-box input:focus { outline: 2px solid #122A54; border-color: transparent; }
+  #submitLoginBtn {
+    width: 100%; margin-top: 18px; padding: 11px; background: #D8262E;
+    color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
   }
-  button:disabled { opacity: 0.6; cursor: not-allowed; }
-  #message { margin-top: 14px; font-size: 13px; text-align: center; min-height: 18px; }
-  #message.error { color: #d8262e; }
-  #message.success { color: #16a34a; }
+  #submitLoginBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+  #loginMessage { margin-top: 12px; font-size: 13px; text-align: center; min-height: 18px; }
+  #loginMessage.error { color: #d8262e; }
 </style>
 </head>
 <body>
 
-<div class="card">
+<div class="navbar">
+  <div class="actions">
+    <button id="openLoginBtn">تسجيل الدخول</button>
+    <button id="openAdmissionBtn">بوابة التقديم</button>
+  </div>
+  <div class="brand">كلية تاليان للطب البشري</div>
+</div>
+
+<div class="hero">
   <h1>كلية تاليان للطب البشري</h1>
-  <p class="sub">تسجيل الدخول إلى النظام</p>
+  <p>التميز الأكاديمي والتدريب السريري في خدمة المجتمع</p>
+</div>
 
-  <label for="email">البريد الإلكتروني</label>
-  <input type="email" id="email" placeholder="you@example.com">
+<div class="container">
 
-  <label for="password">كلمة المرور</label>
-  <input type="password" id="password" placeholder="••••••••">
+  <div class="quick-links">
+    <a href="#about"><span class="icon">🏛</span>عن الكلية</a>
+    <a id="admissionQuickLink" href="admission.html"><span class="icon">🎓</span>القبول والتسجيل</a>
+    <a href="#news"><span class="icon">📰</span>الأخبار والفعاليات</a>
+    <a href="#contact"><span class="icon">📞</span>اتصل بنا</a>
+  </div>
 
-  <button id="loginBtn">تسجيل الدخول</button>
-  <div id="message"></div>
+  <p class="section-title" id="news">آخر الأخبار</p>
+  <div class="news-grid">
+    <div class="news-card">
+      <div class="img"></div>
+      <div class="body"><p class="title">بدء التسجيل للفصل الجديد</p><p class="date">قبل 3 أيام</p></div>
+    </div>
+    <div class="news-card">
+      <div class="img"></div>
+      <div class="body"><p class="title">حفل تخريج الدفعة الأولى</p><p class="date">قبل أسبوع</p></div>
+    </div>
+    <div class="news-card">
+      <div class="img"></div>
+      <div class="body"><p class="title">مؤتمر علمي في الطب الباطني</p><p class="date">قبل أسبوعين</p></div>
+    </div>
+  </div>
+
+  <p class="section-title" id="about">عن الكلية</p>
+  <div class="about-card">
+    <p>
+      كلية تاليان للطب البشري كلية أهلية مستقلة تُعنى بإعداد أطباء بشريين على أعلى
+      مستوى من الكفاءة العلمية والمهنية، من خلال مناهج أكاديمية حديثة وتدريب سريري
+      عملي بالتعاون مع مستشفيات تدريبية معتمدة.
+    </p>
+  </div>
+
+</div>
+
+<footer id="contact">
+  <div><span class="icon">📍</span>العنوان</div>
+  <div><span class="icon">☎️</span>الهاتف</div>
+  <div><span class="icon">✉️</span>البريد الإلكتروني</div>
+  <div><span class="icon">📘</span>فيسبوك</div>
+</footer>
+
+<!-- نافذة تسجيل الدخول -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box">
+    <button class="close" id="closeLoginBtn">✕</button>
+    <h2>تسجيل الدخول</h2>
+    <label for="email">البريد الإلكتروني</label>
+    <input type="email" id="email" placeholder="you@example.com">
+    <label for="password">كلمة المرور</label>
+    <input type="password" id="password" placeholder="••••••••">
+    <button id="submitLoginBtn">دخول</button>
+    <div id="loginMessage"></div>
+  </div>
 </div>
 
 <script type="module">
@@ -63,7 +171,7 @@
   import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-  // كل نوع حساب له صفحة مقصد مختلفة - نفس منطق "التوجيه التلقائي بعد الدخول"
+  // كل نوع حساب له بوابة مقصد مختلفة - التوجيه التلقائي بعد الدخول
   const REDIRECT_MAP = {
     STUDENT: "student.html",
     FACULTY: "faculty.html",
@@ -71,60 +179,54 @@
     APPLICANT: "applicant.html",
   };
 
-  const messageEl = document.getElementById("message");
-  const loginBtn = document.getElementById("loginBtn");
+  const modal = document.getElementById("loginModal");
+  const messageEl = document.getElementById("loginMessage");
+  const submitBtn = document.getElementById("submitLoginBtn");
 
-  function showMessage(text, type) {
+  document.getElementById("openLoginBtn").addEventListener("click", () => modal.classList.add("open"));
+  document.getElementById("closeLoginBtn").addEventListener("click", () => modal.classList.remove("open"));
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
+
+  function showMessage(text) {
     messageEl.textContent = text;
-    messageEl.className = type;
+    messageEl.className = "error";
   }
 
-  loginBtn.addEventListener("click", async () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-
-    if (!email || !password) {
-      showMessage("الرجاء إدخال البريد وكلمة المرور", "error");
+  async function redirectByRole(uid) {
+    const userDocSnap = await getDoc(doc(db, "users", uid));
+    if (!userDocSnap.exists()) {
+      showMessage("لا يوجد ملف بيانات لهذا الحساب، راجع إدارة النظام");
+      submitBtn.disabled = false;
       return;
     }
+    const data = userDocSnap.data();
+    if (data.isSuperAdmin) { window.location.href = "dev.html"; return; }
+    const target = REDIRECT_MAP[data.userType];
+    if (target) window.location.href = target;
+    else { showMessage("نوع حساب غير معروف، راجع إدارة النظام"); submitBtn.disabled = false; }
+  }
 
-    loginBtn.disabled = true;
-    showMessage("جاري التحقق...", "");
+  submitBtn.addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    if (!email || !password) { showMessage("الرجاء إدخال البريد وكلمة المرور"); return; }
+
+    submitBtn.disabled = true;
+    messageEl.textContent = "جاري التحقق...";
+    messageEl.className = "";
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged تحت رح تتكفل بالتوجيه
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      await redirectByRole(cred.user.uid);
     } catch (err) {
-      showMessage("بيانات الدخول غير صحيحة", "error");
-      loginBtn.disabled = false;
+      showMessage("بيانات الدخول غير صحيحة");
+      submitBtn.disabled = false;
     }
   });
 
-  // لو المستخدم أصلاً مسجّل دخول (جلسة سابقة)، وجّهه فوراً بدون ما يشوف نموذج الدخول
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) return;
-
-    const userDocSnap = await getDoc(doc(db, "users", user.uid));
-    if (!userDocSnap.exists()) {
-      showMessage("لا يوجد ملف بيانات لهذا الحساب، راجع إدارة النظام", "error");
-      loginBtn.disabled = false;
-      return;
-    }
-
-    const data = userDocSnap.data();
-
-    if (data.isSuperAdmin) {
-      window.location.href = "dev.html";
-      return;
-    }
-
-    const target = REDIRECT_MAP[data.userType];
-    if (target) {
-      window.location.href = target;
-    } else {
-      showMessage("نوع حساب غير معروف، راجع إدارة النظام", "error");
-      loginBtn.disabled = false;
-    }
+  // لو المستخدم أصلاً بجلسة سابقة فعّالة، وجّهه فوراً دون ما يشوف الموقع العام
+  onAuthStateChanged(auth, (user) => {
+    if (user) redirectByRole(user.uid);
   });
 </script>
 
