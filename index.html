@@ -23,116 +23,54 @@
     max-width: 380px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.25);
   }
-  h1 {
-    font-size: 18px;
-    color: #122A54;
-    text-align: center;
-    margin-bottom: 4px;
-  }
-  p.sub {
-    text-align: center;
-    color: #6b7280;
-    font-size: 13px;
-    margin-bottom: 24px;
-  }
-  label {
-    display: block;
-    font-size: 13px;
-    color: #374151;
-    margin-bottom: 6px;
-    margin-top: 14px;
-  }
+  h1 { font-size: 18px; color: #122A54; text-align: center; margin-bottom: 4px; }
+  p.sub { text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 24px; }
+  label { display: block; font-size: 13px; color: #374151; margin-bottom: 6px; margin-top: 14px; }
   input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 14px;
-    direction: ltr;
-    text-align: right;
+    width: 100%; padding: 10px 12px; border: 1px solid #d1d5db;
+    border-radius: 8px; font-size: 14px; direction: ltr; text-align: right;
   }
   input:focus { outline: 2px solid #122A54; border-color: transparent; }
   button {
-    width: 100%;
-    margin-top: 22px;
-    padding: 11px;
-    background: #D8262E;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
+    width: 100%; margin-top: 22px; padding: 11px; background: #D8262E;
+    color: #fff; border: none; border-radius: 8px; font-size: 14px;
+    font-weight: 600; cursor: pointer;
   }
   button:disabled { opacity: 0.6; cursor: not-allowed; }
-  #message {
-    margin-top: 14px;
-    font-size: 13px;
-    text-align: center;
-    min-height: 18px;
-  }
+  #message { margin-top: 14px; font-size: 13px; text-align: center; min-height: 18px; }
   #message.error { color: #d8262e; }
   #message.success { color: #16a34a; }
-  #dashboard { display: none; text-align: center; }
-  #dashboard h2 { color: #122A54; font-size: 17px; margin-bottom: 6px; }
-  #dashboard p { color: #6b7280; font-size: 13px; margin-bottom: 4px; }
-  #logoutBtn { background: #122A54; margin-top: 18px; }
 </style>
 </head>
 <body>
 
 <div class="card">
+  <h1>كلية تاليان للطب البشري</h1>
+  <p class="sub">تسجيل الدخول إلى النظام</p>
 
-  <div id="loginBox">
-    <h1>كلية تاليان للطب البشري</h1>
-    <p class="sub">تسجيل الدخول إلى النظام</p>
+  <label for="email">البريد الإلكتروني</label>
+  <input type="email" id="email" placeholder="you@example.com">
 
-    <label for="email">البريد الإلكتروني</label>
-    <input type="email" id="email" placeholder="you@example.com">
+  <label for="password">كلمة المرور</label>
+  <input type="password" id="password" placeholder="••••••••">
 
-    <label for="password">كلمة المرور</label>
-    <input type="password" id="password" placeholder="••••••••">
-
-    <button id="loginBtn">تسجيل الدخول</button>
-    <div id="message"></div>
-  </div>
-
-  <div id="dashboard" style="display: none; text-align: center;">
-    <h2 id="welcomeName"></h2>
-    <p id="welcomeType"></p>
-    <p id="welcomeEmail"></p>
-    <a id="adminLink" href="admin-users.html" style="display:none; margin-top:14px; color:#122A54; font-size:13px; font-weight:600; text-decoration:none;">← لوحة إدارة المستخدمين</a>
-    <button id="logoutBtn">تسجيل الخروج</button>
-  </div>
-
+  <button id="loginBtn">تسجيل الدخول</button>
+  <div id="message"></div>
 </div>
 
-<!-- Firebase SDK عبر CDN مباشرة - بدون أي تثبيت أو npm -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import {
-    getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
-  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import {
-    getFirestore, doc, getDoc
-  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { auth, db } from "./firebase-config.js";
+  import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-  // إعدادات مشروعك بالضبط كما ظهرت بلوحة Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyCbAdssxVWFJp2KCy_ZJhrNlW_CB0fUVOA",
-    authDomain: "talyan-fad6f.firebaseapp.com",
-    projectId: "talyan-fad6f",
-    storageBucket: "talyan-fad6f.firebasestorage.app",
-    messagingSenderId: "1043413564562",
-    appId: "1:1043413564562:web:db4fd444c0c2fe3654ba4b"
+  // كل نوع حساب له صفحة مقصد مختلفة - نفس منطق "التوجيه التلقائي بعد الدخول"
+  const REDIRECT_MAP = {
+    STUDENT: "student.html",
+    FACULTY: "faculty.html",
+    STAFF: "staff.html",
+    APPLICANT: "applicant.html",
   };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  const loginBox = document.getElementById("loginBox");
-  const dashboard = document.getElementById("dashboard");
   const messageEl = document.getElementById("message");
   const loginBtn = document.getElementById("loginBtn");
 
@@ -155,40 +93,37 @@
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged تحت رح تتكفل بعرض لوحة التحكم
+      // onAuthStateChanged تحت رح تتكفل بالتوجيه
     } catch (err) {
       showMessage("بيانات الدخول غير صحيحة", "error");
       loginBtn.disabled = false;
     }
   });
 
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    signOut(auth);
-  });
-
-  // يراقب حالة تسجيل الدخول تلقائياً، ويجلب بيانات المستخدم من Firestore
+  // لو المستخدم أصلاً مسجّل دخول (جلسة سابقة)، وجّهه فوراً بدون ما يشوف نموذج الدخول
   onAuthStateChanged(auth, async (user) => {
-    loginBtn.disabled = false;
-    if (user) {
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
+    if (!user) return;
 
-      if (!userDocSnap.exists()) {
-        showMessage("تم الدخول لكن لا يوجد ملف بيانات لهذا الحساب بقاعدة البيانات", "error");
-        return;
-      }
+    const userDocSnap = await getDoc(doc(db, "users", user.uid));
+    if (!userDocSnap.exists()) {
+      showMessage("لا يوجد ملف بيانات لهذا الحساب، راجع إدارة النظام", "error");
+      loginBtn.disabled = false;
+      return;
+    }
 
-      const data = userDocSnap.data();
-      loginBox.style.display = "none";
-      dashboard.style.display = "block";
-      document.getElementById("welcomeName").textContent = "مرحباً " + (data.fullName || "");
-      document.getElementById("welcomeType").textContent =
-        "نوع الحساب: " + (data.isSuperAdmin ? "مطوّر (صلاحيات مطلقة)" : data.userType);
-      document.getElementById("welcomeEmail").textContent = user.email;
-      document.getElementById("adminLink").style.display = data.isSuperAdmin ? "inline-block" : "none";
+    const data = userDocSnap.data();
+
+    if (data.isSuperAdmin) {
+      window.location.href = "dev.html";
+      return;
+    }
+
+    const target = REDIRECT_MAP[data.userType];
+    if (target) {
+      window.location.href = target;
     } else {
-      loginBox.style.display = "block";
-      dashboard.style.display = "none";
+      showMessage("نوع حساب غير معروف، راجع إدارة النظام", "error");
+      loginBtn.disabled = false;
     }
   });
 </script>

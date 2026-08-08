@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بوابة التدريسي - كلية تاليان</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f4f5f7; min-height: 100vh; }
+  .topbar { background: #122A54; color: #fff; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .topbar h1 { font-size: 16px; font-weight: 600; }
+  .topbar button { background: #D8262E; color: #fff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+  .container { max-width: 700px; margin: 24px auto; padding: 0 16px; }
+  .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .card h2 { font-size: 15px; color: #122A54; margin-bottom: 4px; }
+  .card p { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
+  .menu-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #eee; font-size: 13px; color: #374151; }
+  .menu-item:last-child { border-bottom: none; }
+  .menu-item .dot { width: 6px; height: 6px; border-radius: 50%; background: #D8262E; flex-shrink: 0; }
+  .soon { font-size: 11px; color: #9ca3af; margin-right: auto; }
+  #guard { text-align: center; padding: 80px 20px; color: #6b7280; }
+</style>
+</head>
+<body>
+
+<div id="guard">جاري التحقق من الصلاحيات...</div>
+
+<div id="content" style="display:none;">
+  <div class="topbar">
+    <h1>بوابة التدريسي</h1>
+    <button id="logoutBtn">تسجيل الخروج</button>
+  </div>
+  <div class="container">
+    <div class="card">
+      <h2 id="welcomeName"></h2>
+      <p id="welcomeEmail"></p>
+      <div class="menu-item"><span class="dot"></span>موادي وشعبي<span class="soon">قريباً</span></div>
+      <div class="menu-item"><span class="dot"></span>رصد الدرجات<span class="soon">قريباً</span></div>
+      <div class="menu-item"><span class="dot"></span>تسجيل الحضور<span class="soon">قريباً</span></div>
+      <div class="menu-item"><span class="dot"></span>طلبتي المرشدين<span class="soon">قريباً</span></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const REQUIRED_TYPE = "FACULTY";
+  const guardEl = document.getElementById("guard");
+  const contentEl = document.getElementById("content");
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      guardEl.innerHTML = 'الرجاء تسجيل الدخول أولاً - <a href="index.html">اضغط هنا</a>';
+      return;
+    }
+    const userDocSnap = await getDoc(doc(db, "users", user.uid));
+    if (!userDocSnap.exists()) {
+      guardEl.textContent = "لا يوجد ملف بيانات لهذا الحساب";
+      return;
+    }
+    const data = userDocSnap.data();
+
+    if (data.isSuperAdmin) {
+      // المطوّر يقدر يعاين أي بوابة بدون قيد
+    } else if (data.userType !== REQUIRED_TYPE) {
+      guardEl.innerHTML = 'هذه الصفحة غير مخصصة لنوع حسابك - <a href="index.html">العودة</a>';
+      return;
+    }
+
+    guardEl.style.display = "none";
+    contentEl.style.display = "block";
+    document.getElementById("welcomeName").textContent = "مرحباً " + (data.fullName || "");
+    document.getElementById("welcomeEmail").textContent = user.email;
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    signOut(auth).then(() => window.location.href = "index.html");
+  });
+</script>
+
+</body>
+</html>

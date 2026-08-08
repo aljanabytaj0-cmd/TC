@@ -88,7 +88,7 @@
 <div id="content" style="display:none;">
   <div class="topbar">
     <h1>لوحة إدارة المستخدمين</h1>
-    <a href="index.html">→ العودة للرئيسية</a>
+    <a href="dev.html">→ العودة للوحة المطوّر</a>
   </div>
 
   <div class="container">
@@ -147,19 +147,7 @@
   import {
     getFirestore, doc, getDoc, setDoc, collection, getDocs
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCbAdssxVWFJp2KCy_ZJhrNlW_CB0fUVOA",
-    authDomain: "talyan-fad6f.firebaseapp.com",
-    projectId: "talyan-fad6f",
-    storageBucket: "talyan-fad6f.firebasestorage.app",
-    messagingSenderId: "1043413564562",
-    appId: "1:1043413564562:web:db4fd444c0c2fe3654ba4b"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+  import { app, auth, db, firebaseConfig } from "./firebase-config.js";
 
   const guardEl = document.getElementById("guard");
   const contentEl = document.getElementById("content");
