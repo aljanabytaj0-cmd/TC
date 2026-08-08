@@ -34,6 +34,7 @@
     <div class="card">
       <h2 id="welcomeName"></h2>
       <p id="welcomeEmail"></p>
+      <a id="admissionsLink" href="admissions-review.html" style="display:none; font-size:12px; color:#122A54; font-weight:600; text-decoration:none;">← مراجعة طلبات القبول</a>
       <div class="menu-item"><span class="dot"></span>الموظفون<span class="soon">قريباً</span></div>
       <div class="menu-item"><span class="dot"></span>الإجازات<span class="soon">قريباً</span></div>
       <div class="menu-item"><span class="dot"></span>الوثائق والأرشيف<span class="soon">قريباً</span></div>
@@ -74,6 +75,7 @@
     contentEl.style.display = "block";
     document.getElementById("welcomeName").textContent = "مرحباً " + (data.fullName || "");
     document.getElementById("welcomeEmail").textContent = user.email;
+    document.getElementById("admissionsLink").style.display = (data.isSuperAdmin || data.canManageAdmissions) ? "inline-block" : "none";
   });
 
   document.getElementById("logoutBtn").addEventListener("click", () => {

@@ -7,10 +7,7 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f4f5f7; min-height: 100vh; }
-  .navbar {
-    background: #122A54; color: #fff; padding: 14px 24px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
+  .navbar { background: #122A54; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
   .navbar a { color: #fff; font-size: 13px; text-decoration: none; }
   .navbar .brand { font-size: 15px; font-weight: 600; }
   .container { max-width: 560px; margin: 30px auto; padding: 0 16px 40px; }
@@ -75,27 +72,34 @@
               <option value="FEMALE">أنثى</option>
             </select>
           </div>
-          <div><label>الجنسية</label><input type="text" id="nationality" value="عراقي" required></div>
+          <div>
+            <label>الجنسية</label>
+            <select id="nationality" required></select>
+          </div>
         </div>
         <label>رقم الهاتف</label>
         <input type="tel" id="phone" required>
       </fieldset>
 
       <fieldset>
+        <legend>السكن والإقامة</legend>
+        <div class="row">
+          <div>
+            <label>المحافظة</label>
+            <select id="governorate" required></select>
+          </div>
+          <div><label>القضاء / المنطقة</label><input type="text" id="district" required></div>
+        </div>
+        <label>العنوان التفصيلي</label>
+        <input type="text" id="detailedAddress" placeholder="الحي، الشارع، أقرب نقطة دالة" required>
+      </fieldset>
+
+      <fieldset>
         <legend>البيانات الدراسية</legend>
         <label>اسم المدرسة الثانوية</label>
         <input type="text" id="highSchoolName" required>
-        <div class="row">
-          <div><label>سنة التخرج</label><input type="number" id="graduationYear" min="2000" max="2026" required></div>
-          <div>
-            <label>الفرع الدراسي</label>
-            <select id="branch" required>
-              <option value="">اختر</option>
-              <option value="SCIENTIFIC">علمي</option>
-              <option value="LITERARY">أدبي</option>
-            </select>
-          </div>
-        </div>
+        <label>سنة التخرج</label>
+        <input type="number" id="graduationYear" min="2000" max="2026" required>
         <label>المعدل (النسبة المئوية)</label>
         <input type="number" id="averageScore" min="50" max="100" step="0.01" required>
       </fieldset>
@@ -110,6 +114,29 @@
   import { auth, db } from "./firebase-config.js";
   import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const COUNTRIES = [
+    "العراق","الأردن","سوريا","لبنان","فلسطين","مصر","السعودية","الكويت","قطر","البحرين",
+    "الإمارات","عُمان","اليمن","ليبيا","تونس","الجزائر","المغرب","السودان","موريتانيا","الصومال",
+    "جيبوتي","جزر القمر","تركيا","إيران","أفغانستان","باكستان","الهند","بنغلاديش","إندونيسيا","ماليزيا",
+    "الصين","اليابان","كوريا الجنوبية","الفلبين","أذربيجان","أوزبكستان","تركمانستان","كازاخستان",
+    "قيرغيزستان","طاجيكستان","بريطانيا","ألمانيا","فرنسا","إيطاليا","إسبانيا","هولندا","بلجيكا",
+    "السويد","النرويج","الدنمارك","سويسرا","النمسا","اليونان","بولندا","روسيا","أوكرانيا",
+    "الولايات المتحدة","كندا","البرازيل","الأرجنتين","المكسيك","نيجيريا","إثيوبيا","كينيا",
+    "جنوب أفريقيا","أستراليا","نيوزيلندا","دولة أخرى"
+  ];
+
+  const GOVERNORATES = [
+    "بغداد","نينوى","البصرة","أربيل","النجف","كربلاء","الأنبار","ديالى","ذي قار","بابل",
+    "واسط","صلاح الدين","كركوك","ميسان","المثنى","القادسية","دهوك","السليمانية"
+  ];
+
+  function fillSelect(id, items) {
+    const el = document.getElementById(id);
+    el.innerHTML = items.map(c => `<option value="${c}">${c}</option>`).join("");
+  }
+  fillSelect("nationality", COUNTRIES);
+  fillSelect("governorate", GOVERNORATES);
 
   const form = document.getElementById("applyForm");
   const messageEl = document.getElementById("message");
@@ -126,20 +153,12 @@
     const fullName = document.getElementById("fullName").value.trim();
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
-    const branch = document.getElementById("branch").value;
     const averageScore = parseFloat(document.getElementById("averageScore").value);
 
     if (password.length < 8) {
       showMessage("كلمة المرور يجب أن تكون 8 أحرف على الأقل", "error");
       return;
     }
-
-    // شرط القبول الأساسي بكلية الطب - الفرع العلمي إجباري
-    if (branch !== "SCIENTIFIC") {
-      showMessage("القبول بكلية الطب البشري يتطلب الفرع العلمي حصراً", "error");
-      return;
-    }
-
     if (isNaN(averageScore) || averageScore < 50 || averageScore > 100) {
       showMessage("الرجاء إدخال معدل صحيح بين 50 و100", "error");
       return;
@@ -152,7 +171,6 @@
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const uid = cred.user.uid;
 
-      // ملف المستخدم الأساسي - بصلاحيات متقدّم محدودة فقط (تفرضها قواعد الحماية)
       await setDoc(doc(db, "users", uid), {
         fullName,
         email,
@@ -160,16 +178,17 @@
         isSuperAdmin: false,
       });
 
-      // بيانات طلب التقديم التفصيلية
       await setDoc(doc(db, "applications", uid), {
         nationalId: document.getElementById("nationalId").value.trim(),
         dateOfBirth: document.getElementById("dateOfBirth").value,
         gender: document.getElementById("gender").value,
-        nationality: document.getElementById("nationality").value.trim(),
+        nationality: document.getElementById("nationality").value,
         phone: document.getElementById("phone").value.trim(),
+        governorate: document.getElementById("governorate").value,
+        district: document.getElementById("district").value.trim(),
+        detailedAddress: document.getElementById("detailedAddress").value.trim(),
         highSchoolName: document.getElementById("highSchoolName").value.trim(),
         graduationYear: Number(document.getElementById("graduationYear").value),
-        branch,
         averageScore,
         status: "SUBMITTED",
         submittedAt: serverTimestamp(),

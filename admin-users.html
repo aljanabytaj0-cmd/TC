@@ -122,6 +122,10 @@
         <input type="checkbox" id="newIsSuperAdmin">
         <label for="newIsSuperAdmin" style="margin:0;">صلاحيات مطوّر مطلقة (استخدم بحذر شديد)</label>
       </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="newCanManageAdmissions">
+        <label for="newCanManageAdmissions" style="margin:0;">صلاحية مراجعة طلبات القبول (قبول / رفض)</label>
+      </div>
       <button id="addUserBtn">إضافة المستخدم</button>
       <div id="formMessage"></div>
     </div>
@@ -180,10 +184,11 @@
       const typeLabel = d.isSuperAdmin
         ? '<span class="badge dev">مطوّر</span>'
         : '<span class="badge">' + (d.userType || "-") + '</span>';
+      const admissionsBadge = d.canManageAdmissions ? ' <span class="badge dev">قبول</span>' : '';
       tbody.innerHTML += `<tr>
         <td>${d.fullName || "-"}</td>
         <td>${d.email || "-"}</td>
-        <td>${typeLabel}</td>
+        <td>${typeLabel}${admissionsBadge}</td>
       </tr>`;
     });
   }
@@ -194,6 +199,7 @@
     const password = document.getElementById("newPassword").value;
     const userType = document.getElementById("newUserType").value;
     const isSuperAdmin = document.getElementById("newIsSuperAdmin").checked;
+    const canManageAdmissions = document.getElementById("newCanManageAdmissions").checked;
     const msgEl = document.getElementById("formMessage");
     const btn = document.getElementById("addUserBtn");
 
@@ -224,6 +230,7 @@
         email,
         userType,
         isSuperAdmin,
+        canManageAdmissions,
       });
 
       msgEl.className = "success";
@@ -232,6 +239,7 @@
       document.getElementById("newEmail").value = "";
       document.getElementById("newPassword").value = "";
       document.getElementById("newIsSuperAdmin").checked = false;
+      document.getElementById("newCanManageAdmissions").checked = false;
       loadUsers();
     } catch (err) {
       msgEl.className = "error";

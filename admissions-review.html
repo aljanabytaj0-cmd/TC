@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مراجعة طلبات القبول - كلية تاليان</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #f4f5f7; min-height: 100vh; }
+  .topbar { background: #122A54; color: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .topbar h1 { font-size: 16px; font-weight: 600; }
+  .topbar a { color: #fff; font-size: 13px; text-decoration: none; opacity: 0.85; }
+  .container { max-width: 900px; margin: 20px auto; padding: 0 16px; }
+  .app-card {
+    background: #fff; border-radius: 12px; padding: 18px; margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .app-card .info { flex: 1; min-width: 220px; }
+  .app-card .info p { font-size: 13px; margin-bottom: 3px; color: #374151; }
+  .app-card .info p.name { font-size: 14px; font-weight: 600; color: #122A54; margin-bottom: 6px; }
+  .app-card .score { font-size: 20px; font-weight: 700; color: #D8262E; }
+  .app-card .score-label { font-size: 11px; color: #9ca3af; }
+  .actions { display: flex; flex-direction: column; gap: 8px; justify-content: center; min-width: 110px; }
+  .actions button { border: none; padding: 8px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .btn-accept { background: #16a34a; color: #fff; }
+  .btn-reject { background: #D8262E; color: #fff; }
+  .status-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; }
+  .status-SUBMITTED { background: #eef0f4; color: #374151; }
+  .status-ACCEPTED { background: #dcfce7; color: #16a34a; }
+  .status-REJECTED { background: #fde8e8; color: #D8262E; }
+  #guard { text-align: center; padding: 80px 20px; color: #6b7280; }
+  #empty { text-align: center; padding: 40px; color: #9ca3af; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div id="guard">جاري التحقق من الصلاحيات...</div>
+
+<div id="content" style="display:none;">
+  <div class="topbar">
+    <h1>مراجعة طلبات القبول</h1>
+    <a href="index.html">→ العودة للرئيسية</a>
+  </div>
+  <div class="container" id="appsContainer"></div>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase-config.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const guardEl = document.getElementById("guard");
+  const contentEl = document.getElementById("content");
+  const appsContainer = document.getElementById("appsContainer");
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      guardEl.innerHTML = 'الرجاء تسجيل الدخول أولاً - <a href="index.html">اضغط هنا</a>';
+      return;
+    }
+    const userDocSnap = await getDoc(doc(db, "users", user.uid));
+    const me = userDocSnap.exists() ? userDocSnap.data() : null;
+
+    if (!me || (!me.isSuperAdmin && !me.canManageAdmissions)) {
+      guardEl.innerHTML = 'لا تملك صلاحية مراجعة طلبات القبول - <a href="index.html">العودة</a>';
+      return;
+    }
+
+    guardEl.style.display = "none";
+    contentEl.style.display = "block";
+    loadApplications();
+  });
+
+  async function loadApplications() {
+    appsContainer.innerHTML = "جاري التحميل...";
+    const snapshot = await getDocs(collection(db, "applications"));
+
+    if (snapshot.empty) {
+      appsContainer.innerHTML = '<div id="empty">لا توجد طلبات تقديم حتى الآن</div>';
+      return;
+    }
+
+    appsContainer.innerHTML = "";
+    for (const appDoc of snapshot.docs) {
+      const app = appDoc.data();
+      const uid = appDoc.id;
+      const userDocSnap = await getDoc(doc(db, "users", uid));
+      const userData = userDocSnap.exists() ? userDocSnap.data() : {};
+
+      const card = document.createElement("div");
+      card.className = "app-card";
+      card.innerHTML = `
+        <div class="info">
+          <p class="name">${userData.fullName || "-"}</p>
+          <p>${userData.email || "-"} | ${app.phone || "-"}</p>
+          <p>${app.governorate || "-"} - ${app.district || "-"}</p>
+          <p>الثانوية: ${app.highSchoolName || "-"} (${app.graduationYear || "-"})</p>
+          <p><span class="status-badge status-${app.status}">${statusLabel(app.status)}</span></p>
+        </div>
+        <div style="text-align:center;">
+          <div class="score">${app.averageScore ?? "-"}</div>
+          <div class="score-label">المعدل</div>
+        </div>
+        <div class="actions">
+          <button class="btn-accept" data-uid="${uid}" data-action="accept" ${app.status !== "SUBMITTED" ? "disabled" : ""}>قبول</button>
+          <button class="btn-reject" data-uid="${uid}" data-action="reject" ${app.status !== "SUBMITTED" ? "disabled" : ""}>رفض</button>
+        </div>
+      `;
+      appsContainer.appendChild(card);
+    }
+
+    appsContainer.querySelectorAll("button[data-action]").forEach((btn) => {
+      btn.addEventListener("click", () => handleDecision(btn.dataset.uid, btn.dataset.action));
+    });
+  }
+
+  function statusLabel(status) {
+    return { SUBMITTED: "قيد المراجعة", ACCEPTED: "مقبول", REJECTED: "مرفوض" }[status] || status;
+  }
+
+  async function handleDecision(uid, action) {
+    const newStatus = action === "accept" ? "ACCEPTED" : "REJECTED";
+    await updateDoc(doc(db, "applications", uid), { status: newStatus });
+
+    // عند القبول: يتحول الحساب تلقائياً من متقدّم إلى طالب
+    if (action === "accept") {
+      await updateDoc(doc(db, "users", uid), { userType: "STUDENT" });
+    }
+
+    loadApplications();
+  }
+</script>
+
+</body>
+</html>
